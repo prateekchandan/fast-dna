@@ -119,15 +119,10 @@ class FormSection extends React.Component<
     /**
      * Renders the form
      */
-    private renderRootObject(
-        dataLocation: string,
-        schema: any,
-        invalidMessage: string
-    ): React.ReactNode {
+    private renderRootObject(schema: any): React.ReactNode {
         return this.generateFormObject(
             schema,
             schema.required || undefined,
-            invalidMessage,
             schema.not ? schema.not.required : undefined
         );
     }
@@ -146,7 +141,7 @@ class FormSection extends React.Component<
     ): React.ReactNode => {
         // if this is a root level object use it to generate the form and do not generate a link
         if (schema.type === "object" && propertyName === "") {
-            return this.renderRootObject(propertyName, schema, invalidMessage);
+            return this.renderRootObject(schema);
         }
 
         return (
@@ -180,8 +175,7 @@ class FormSection extends React.Component<
      */
     private renderCategories(
         categories: FormCategoryConfig[] = [],
-        controls: FormControlsWithConfigOptions,
-        invalidMessage: string
+        controls: FormControlsWithConfigOptions
     ): React.ReactNode {
         return this.getAllCategories(categories).map(
             (category: FormCategoryConfig, index: number): React.ReactNode => {
@@ -190,7 +184,7 @@ class FormSection extends React.Component<
                         .concat([
                             {
                                 propertyName: void 0,
-                                render: this.renderAdditionalProperties(invalidMessage),
+                                render: this.renderAdditionalProperties(),
                             },
                         ])
                         .map(
@@ -352,7 +346,6 @@ class FormSection extends React.Component<
     private generateFormObject(
         schema: any,
         required: string[],
-        invalidMessage: string,
         not?: string[]
     ): React.ReactNode {
         let formControls: FormControlsWithConfigOptions;
@@ -367,8 +360,7 @@ class FormSection extends React.Component<
 
             return this.renderCategories(
                 get(schema, "formConfig.categories"),
-                formControls,
-                invalidMessage
+                formControls
             );
         }
     }
@@ -407,11 +399,14 @@ class FormSection extends React.Component<
     /**
      * Renders additional properties if they have been declared
      */
-    private renderAdditionalProperties(invalidMessage: string): React.ReactNode {
+    private renderAdditionalProperties(): React.ReactNode {
         const schemaLocation: string = this.getSchemaLocation();
         const schema: any = get(this.state.schema, schemaLocation, this.state.schema);
 
-        if (typeof schema.additionalProperties === "object") {
+        if (
+            typeof schema.additionalProperties === "object" ||
+            schema.additionalProperties === false
+        ) {
             return (
                 <FormDictionary
                     index={0}
@@ -430,7 +425,7 @@ class FormSection extends React.Component<
                     childOptions={this.props.childOptions}
                     onChange={this.props.onChange}
                     onUpdateSection={this.props.onUpdateSection}
-                    invalidMessage={invalidMessage}
+                    validationErrors={this.props.validationErrors}
                     displayValidationBrowserDefault={
                         this.props.displayValidationBrowserDefault
                     }
